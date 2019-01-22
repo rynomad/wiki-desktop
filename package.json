@@ -2,11 +2,11 @@
   "name": "electron-wiki",
   "productName": "electron-wiki",
   "version": "1.0.0",
-  "description": "My Electron application description",
+  "description": "Federated Wiki Desktop App",
   "main": "src/index.js",
   "scripts": {
     "start": "electron-forge start --enable-logging",
-    "package": "electron-forge package",
+    "package": "electron-forge package -p all",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "echo \"No linting configured\""
@@ -45,7 +45,7 @@
     "electron-squirrel-startup": "^1.0.0",
     "nbonjour": "^3.6.3",
     "wiki": "^0.16.1",
-    "wiki-security-desktop": "file:../wiki-security-desktop"
+    "wiki-security-desktop": "@^0.0.2"
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.0.0-beta.22",
