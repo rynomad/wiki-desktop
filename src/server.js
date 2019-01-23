@@ -1,57 +1,79 @@
 const {fork} = require('child_process')
 const path = require('path')
 const {ipcMain} = require('electron')
+const MDNS = require('./mdns.js')
 
-const startServer = async () => new Promise((resolve, reject) => {
-  console.log("APP READER",path.resolve(__dirname,'..','node_modules','wiki','index.js'))
+
+
+const startServer = async (log_window, port = 3000) => new Promise((resolve, reject) => {
+  console.log("START")
+
+  const log = (...args) => {
+    console.log("WIKI", ...args)
+    log_window.webContents.send('log', args.join(' '))
+  }
+
+  log("APP READER",path.resolve(__dirname,'..','node_modules','wiki','index.js'))
   const wiki = fork(path.resolve(__dirname,'..','node_modules','wiki','index.js'),[
     '--security_type',
     'desktop',
     '--cookieSecret',
-    'test', 
+    'test',
+    '--port',
+    port,
     '--packageDir',
     path.resolve(__dirname,'..','node_modules')
   ], {stdio : ['pipe','pipe','pipe','ipc']})
-  let owner = ''
+  let owner = {
+    secret : '',
+    name : ''
+  }
 
   ipcMain.on('id', (event) => {
-    console.log("GOT ID REQUEST")
-    event.returnValue = owner
+    log("GOT ID REQUEST")
+    event.returnValue = owner.secret
   })
   /* todo : fix IPC for realistic transport of reclaim code
   wiki.on('message', (_owner) => {
-    console.log("ONMESSAGE")
-    console.log("GOT OWNER", _owner)
+    log("ONMESSAGE")
+    log("GOT OWNER", _owner)
     owner = _owner
   })
   */
   wiki.on('error', (e) => {
-    console.log("ERROR",e)
+    log("ERROR",e)
   })
   wiki.on('exit', (rc) => {
-    console.log("WIKEXIT:", rc)
+    log("WIKEXIT:", rc)
     reject(rc)
   })
   wiki.on('close', (rc) => {
-    console.log("WIKLOSE:", rc)
+    log("WIKLOSE:", rc)
     reject(rc)
   })
-  console.log("post fork")
+  log("post fork")
   wiki.stderr.on('data', (d) => {
-    console.log("WIKERR:", d.toString())
+    log("WIKERR:", d.toString())
   })
 
   wiki.stdout.on('data', (d) => {
     const msg = d.toString()
-    console.log("WIKI: ", msg)
+    log("WIKI: ", msg)
 
     // hax, see aboves
-    if (msg.indexOf('RECLAIM_CODE:') === 0){
-      owner = msg.split(':')[1].split(' ')[0]
+    if (msg.indexOf('[[[OWNER:') >= 0){
+      log("GOT OWNER")
+      const [_, name, secret] = msg.split(':')
+      owner = {name, secret}
+      log("got owner", owner)
     }
 
     if (msg.indexOf('listening') >= 0 ){
-      resolve(wiki)
+      const mdns = MDNS(port, owner, log)
+
+      resolve(mdns)
+
+
     }
   })
 })

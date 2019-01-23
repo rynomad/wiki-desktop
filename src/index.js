@@ -1,6 +1,6 @@
-const { fork } = require("child_process")
+
 const { resolve } = require('path')
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 
 const startServer = require('./server.js')
 
@@ -11,46 +11,96 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
+let mainURL;
 let mainWindow;
+const windows = new Map()
 
-const createWindow = () => {
+const createWindow = (url, log_window) => {
   // Create the browser window.
-  mainWindow = new BrowserWindow({
+  const window = new BrowserWindow({
     width: 800,
     height: 600,
+    show : false,
     webPreferences : {
       nodeIntegration: false,
-      preload : resolve(__dirname,'preload.js')
+      preload : resolve(__dirname,'client.preload.js')
     }
   });
 
+  if (url === mainURL) mainWindow = window
+
+  windows.set(url, window)
+
   // and load the index.html of the app.
-  mainWindow.loadURL(`http://localhost:3000`);
+  window.loadURL(url);
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  window.webContents.openDevTools();
 
   // Emitted when the window is closed.
-  mainWindow.on('closed', () => {
-    // Dereference the window object, usually you would store windows
-    // in an array if your app supports multi windows, this is the time
-    // when you should delete the corresponding element.
-    mainWindow = null;
+  window.on('closed', () => {
+    windows.delete(url)
+    if (window === mainWindow) mainWindow = null
   });
+
+  window.once('ready-to-show', () => {
+    window.show()
+    if (log_window){
+      log_window.hide()
+    }
+    // hack to redraw favicons
+    ipcMain.on('favicon', () => {
+      console.log("REDO FAVICON")
+      window.setBounds({height : 601})
+    })
+  })
 };
+
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', async () => {
-  const wiki = await startServer()
-  createWindow()
+app.on('ready', () => {
+
+  const log_window = new BrowserWindow({
+    width: 800,
+    height: 600,
+    show : false,
+    webPreferences : {
+      nodeIntegration: false,
+      preload : resolve(__dirname,'log.preload.js')
+    }
+  });
+
+  log_window.once('ready-to-show', async () => {
+    console.log("ready-to-show")
+    log_window.show()
+    console.log("did finish load?")
+    mdns = await startServer(log_window)
+    mdns.on('self', (url) => {
+      mainURL = url
+      createWindow(mainURL, log_window)
+    })
+  
+    mdns.on('up', (url) => {
+      console.log("found local wiki:", url)
+      if (mainWindow){
+        mainWindow.webContents.send('mdns', url)
+      }
+      //createWindow(url)
+    })
+  })
+
+  log_window.loadURL('file://' + resolve(__dirname, 'startup.html'))
+
+
 });
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
   // On OS X it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
+  app.quit()
   if (process.platform !== 'darwin') {
     app.quit();
   }
