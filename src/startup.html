@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Starting Federated Wiki Server</title>
+    <style>
+      dialog::backdrop {
+        pointer-events: none;
+      }
+
+      x-button {
+        width : 120px
+      }
+    </style>
+  </head>
+  <body>
+  <script>
+    ipcRenderer.on('log', (event, message) => {
+      document.write(message + '<br>')
+    })
+  </script>  
+  </body>
+</html>
