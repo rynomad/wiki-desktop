@@ -51,7 +51,7 @@ const createWindow = (url, log_window) => {
     // hack to redraw favicons
     ipcMain.on('favicon', () => {
       console.log("REDO FAVICON")
-      window.setBounds({height : 601})
+      //window.setBounds({height : 601})
     })
   })
 };
