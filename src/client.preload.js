@@ -1,3 +1,5 @@
+const localforage = require('localforage')
+window.LF = localforage
 window.ipcRenderer = require('electron').ipcRenderer
 console.log("PRELOAD")
 var forceRedraw = function(element){
@@ -101,63 +103,93 @@ const createMonkeyAJAX = (ajax) => ({
   console.log("AJAX", url)
 
 
-  const fetch_deferred = $.Deferred((deferred) => {
-    console.log("FETCH DISPATCH", type, url, args)
-    fetch(url, mapAjaxToFetch({url, ...args})).then((res) => {
-      console.log("FETCH THEN", type, url, res)
-      if (res.type === 'opaque'){
-        // server has no cors
-        ajax({
-          url,
-          success,
-          error,
-          ...args
-        }).done(deferred.success).fail(deferred.reject)
-        return -1
-      } else if (!res.ok){
-        const e = new Error(res.statusText)
-        e.xhr = res
-        throw e
-      }
-      return mapFetchResToAjax(args, res)
-    }).then((res) => {
-      if (res === -1) return
-      console.log("FETCH->AJAX SUCCESS", type, url, res)
-      success(args.dataType === 'json' ? res.responseJSON : res)
-      deferred.resolve(res.responseJSON || res.responseText)
-    }).catch((e) => {
-      console.log("FETCH CATCH", type, url, e)
-      error(e.xhr, typeof e, e.message)
-      deferred.reject(e.xhr, typeof e, e.message)
-    })
-  })
-
-
-  // const ajax_deferred = $.Deferred((deferred) => {
-  //   console.log("AJAX DISPATCH", type, url, args)
-  //   ajax({
-  //     url,
-  //     success : (context, ...args) => {
-  //       console.log("AJAX SUCCESS", type, url, ...args)
-  //       //success(context, ...args)
-  //     },
-  //     error : (context, ...args) => {
-  //       console.log("AJAX ERROR", type, args)
-  //       //error(context, ...args)
-  //     },
-  //     ...args
-  //   }).done((...args) => {
-  //     console.log("AJAX DONE", type, url, ...args)
-  //     //deferred.resolve(...args)
-  //   })
-  //   .fail((...err) => {
-  //     console.log("AJAX FAIL",type, url, ...err)
-  //     console.log(err[1], err[2])
-  //     //deferred.reject(...err)
+  // const fetch_deferred = $.Deferred((deferred) => {
+  //   console.log("FETCH DISPATCH", type, url, args)
+  //   fetch(url, mapAjaxToFetch({url, ...args})).then((res) => {
+  //     console.log("FETCH THEN", type, url, res)
+  //     if (res.type === 'opaque'){
+  //       // server has no cors
+  //       ajax({
+  //         url,
+  //         success,
+  //         error,
+  //         ...args
+  //       }).done(deferred.success).fail(deferred.reject)
+  //       return -1
+  //     } else if (!res.ok){
+  //       const e = new Error(res.statusText)
+  //       e.xhr = res
+  //       throw e
+  //     }
+  //     return mapFetchResToAjax(args, res)
+  //   }).then((res) => {
+  //     if (res === -1) return
+  //     console.log("FETCH->AJAX SUCCESS", type, url, res)
+  //     success(args.dataType === 'json' ? res.responseJSON : res)
+  //     deferred.resolve(res.responseJSON || res.responseText)
+  //   }).catch((e) => {
+  //     console.log("FETCH CATCH", type, url, e)
+  //     error(e.xhr, typeof e, e.message)
+  //     deferred.reject(e.xhr, typeof e, e.message)
   //   })
   // })
 
-  return fetch_deferred
+
+  const ajax_deferred = $.Deferred((deferred) => {
+    console.log("AJAX DISPATCH", type, url, args)
+    ajax({
+      url,
+      success : (...args) => {
+        console.log("AJAX SUCCESS", type, url, ...args)
+        
+        if (type === 'GET'){
+          let put
+          try {
+            put = JSON.parse(JSON.stringify(args))
+          } catch (e) {
+            put = args
+          }
+          localforage.setItem(url, put).then(() => {
+            if (url.indexOf('sitemap.json') >= 0){
+              console.log("syncing site")
+              const host = url.split('/')[2]
+              return Promise.all(args[0].map(({slug}) => $.ajax({
+                type : 'GET',
+                url : `//${host}/${slug}.json`
+              }))).catch(e => {
+                console.log("AJAX SITEMAP ERROR", e)
+              }).then(res => {
+                console.log("RES ", res)
+              })
+            }
+          })
+        }
+        success(...args)
+      },
+      error : (...args) => {
+        console.log("AJAX ERROR", type, args)
+        localforage.getItem(url).then(res => {
+          console.log("localforage",res)
+          if (!res){
+            error(...args)
+          } else {
+            console.log("cache", res)
+            success(...res)
+          }
+        })
+      },
+      ...args
+    }).done((...args) => {
+      console.log("AJAX DONE", type, url, ...args)
+      deferred.resolve(...args)
+    })
+    .fail((...err) => {
+      console.log("AJAX FAIL",type, url, ...err)
+      deferred.reject(...err)
+    })
+  })
+
+  //return fetch_deferred
   return ajax_deferred
 }
 
@@ -168,7 +200,7 @@ const monkeyAJAX = () => {
 }
 
 window.onload = async () => {
-  //navigator.serviceWorker.register('./serviceWorker.js')
+  console.log("LOCAQL", localforage)
   monkeyAJAX()
   let done = false
 

@@ -30,7 +30,10 @@ const createWindow = (url, log_window) => {
     }
   });
 
-  if (url === mainURL) mainWindow = window
+  if (url === mainURL) {
+    mainWindow = window
+    url = "http://localhost:3000"
+  }
 
   windows.set(url, window)
 
