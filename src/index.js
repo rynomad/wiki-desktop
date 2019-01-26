@@ -23,7 +23,10 @@ const createWindow = (url, log_window) => {
     show : false,
     webPreferences : {
       nodeIntegration: false,
-      preload : resolve(__dirname,'client.preload.js')
+      preload : resolve(__dirname,'client.preload.js'),
+      webSecurity : false,
+      experimentalFeatures : true,
+      plugins : true
     }
   });
 

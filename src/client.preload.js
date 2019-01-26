@@ -133,29 +133,29 @@ const createMonkeyAJAX = (ajax) => ({
   })
 
 
-  const ajax_deferred = $.Deferred((deferred) => {
-    console.log("AJAX DISPATCH", type, url, args)
-    ajax({
-      url,
-      success : (context, ...args) => {
-        console.log("AJAX SUCCESS", type, url, ...args)
-        //success(context, ...args)
-      },
-      error : (context, ...args) => {
-        console.log("AJAX ERROR", type, args)
-        //error(context, ...args)
-      },
-      ...args
-    }).done((...args) => {
-      console.log("AJAX DONE", type, url, ...args)
-      //deferred.resolve(...args)
-    })
-    .fail((...err) => {
-      console.log("AJAX FAIL",type, url, ...err)
-      console.log(err[1], err[2])
-      //deferred.reject(...err)
-    })
-  })
+  // const ajax_deferred = $.Deferred((deferred) => {
+  //   console.log("AJAX DISPATCH", type, url, args)
+  //   ajax({
+  //     url,
+  //     success : (context, ...args) => {
+  //       console.log("AJAX SUCCESS", type, url, ...args)
+  //       //success(context, ...args)
+  //     },
+  //     error : (context, ...args) => {
+  //       console.log("AJAX ERROR", type, args)
+  //       //error(context, ...args)
+  //     },
+  //     ...args
+  //   }).done((...args) => {
+  //     console.log("AJAX DONE", type, url, ...args)
+  //     //deferred.resolve(...args)
+  //   })
+  //   .fail((...err) => {
+  //     console.log("AJAX FAIL",type, url, ...err)
+  //     console.log(err[1], err[2])
+  //     //deferred.reject(...err)
+  //   })
+  // })
 
   return fetch_deferred
   return ajax_deferred
@@ -168,6 +168,7 @@ const monkeyAJAX = () => {
 }
 
 window.onload = async () => {
+  //navigator.serviceWorker.register('./serviceWorker.js')
   monkeyAJAX()
   let done = false
 
