@@ -1,6 +1,6 @@
 
 const { resolve } = require('path')
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, Tray, Menu } = require('electron');
 
 const startServer = require('./server.js')
 
@@ -14,7 +14,7 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
 let mainURL;
 let mainWindow;
 const windows = new Map()
-
+let tray = null
 const createWindow = (url, log_window) => {
   // Create the browser window.
   const window = new BrowserWindow({
@@ -32,7 +32,6 @@ const createWindow = (url, log_window) => {
 
   if (url === mainURL) {
     mainWindow = window
-    url = "http://localhost:3000"
   }
 
   windows.set(url, window)
@@ -41,7 +40,7 @@ const createWindow = (url, log_window) => {
   window.loadURL(url);
 
   // Open the DevTools.
-  window.webContents.openDevTools();
+  //window.webContents.openDevTools();
 
   // Emitted when the window is closed.
   window.on('closed', () => {
@@ -51,13 +50,14 @@ const createWindow = (url, log_window) => {
 
   window.once('ready-to-show', () => {
     window.show()
-    if (log_window){
-      log_window.hide()
-    }
     // hack to redraw favicons
-    ipcMain.on('favicon', () => {
-      console.log("REDO FAVICON")
-      //window.setBounds({height : 601})
+    ipcMain.on('shift', (evt,height) => {
+      console.log("REDO FAVICON", height)
+      try {
+        window.setBounds({height : Number.parseInt(height) + 1})
+      } catch (e) {
+        console.log(e)
+      }
     })
   })
 };
@@ -82,7 +82,7 @@ app.on('ready', () => {
     console.log("ready-to-show")
     log_window.show()
     console.log("did finish load?")
-    mdns = await startServer(log_window)
+    const mdns = await startServer(log_window)
     mdns.on('self', (url) => {
       mainURL = url
       createWindow(mainURL, log_window)
@@ -95,6 +95,27 @@ app.on('ready', () => {
       }
       //createWindow(url)
     })
+
+    mdns.on('favLoc', (favLoc) => {
+      tray = new Tray(favLoc)
+      const contextMenu = Menu.buildFromTemplate([
+        {
+          label : 'open or reset wiki',
+          click : () => {
+            if (mainWindow) {
+              mainWindow.close()
+            }
+            createWindow(mainURL, log_window)
+          }
+        },
+        {
+          label : 'quit',
+          role: 'quit'
+        }
+      ])
+      tray.setContextMenu(contextMenu)
+    })
+
   })
 
   log_window.loadURL('file://' + resolve(__dirname, 'startup.html'))
@@ -107,9 +128,6 @@ app.on('window-all-closed', () => {
   // On OS X it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
   app.quit()
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
 });
 
 app.on('activate', () => {

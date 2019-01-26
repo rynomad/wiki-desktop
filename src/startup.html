@@ -15,8 +15,12 @@
   </head>
   <body>
   <script>
+    setInterval(() => {
+      document.write('.')
+    },1000)
+    document.write('<br>STARTING WIKI')
     ipcRenderer.on('log', (event, message) => {
-      document.write(message + '<br>')
+      document.write('<br>' + message )
     })
   </script>  
   </body>

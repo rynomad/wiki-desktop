@@ -43,6 +43,7 @@
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
+    "localforage": "^1.7.3",
     "mdns": "^2.4.0",
     "mdns-js": "^1.0.3",
     "nbonjour": "^3.6.3",

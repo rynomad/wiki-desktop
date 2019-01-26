@@ -19,7 +19,10 @@ const start = (port, owner, log) => {
     name : os.hostname().split('.')[0],
     txt : {dup}
   });
-  ad.start();
+  ad.start()
+  setInterval(() => {
+    ad.start()
+  }, 10000)
   
   let self = false
 

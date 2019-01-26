@@ -1,9 +1,11 @@
 const {fork} = require('child_process')
 const path = require('path')
-const {ipcMain} = require('electron')
+const {ipcMain, Menu, Tray} = require('electron')
 const MDNS = require('./mdns.js')
 
+const getUserHome = () => process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE
 
+const favLoc = path.join(getUserHome(), '.wiki', 'status', 'favicon.png')
 
 const startServer = async (log_window, port = 3000) => new Promise((resolve, reject) => {
   console.log("START")
@@ -56,6 +58,8 @@ const startServer = async (log_window, port = 3000) => new Promise((resolve, rej
     log("WIKERR:", d.toString())
   })
 
+  let mdns
+  let tray
   wiki.stdout.on('data', (d) => {
     const msg = d.toString()
     log("WIKI: ", msg)
@@ -67,14 +71,21 @@ const startServer = async (log_window, port = 3000) => new Promise((resolve, rej
       owner = {name, secret}
       log("got owner", owner)
     }
-
     if (msg.indexOf('listening') >= 0 ){
-      const mdns = MDNS(port, owner, log)
+      mdns = MDNS(port, owner, log)
 
       resolve(mdns)
-
-
     }
+
+    if (!tray && ((msg.indexOf('POST /favicon.png 200') >= 0) || (msg.indexOf('GET /favicon.png 304') >= 0) || (msg.indexOf('GET /favicon.png 200') >= 0) )){
+      console.log("CONSTRUCT TRAY", favLoc)
+      tray = true
+      mdns.emit('favLoc', favLoc)
+
+      // construct sys tray to quit app
+    }
+
+
   })
 })
 
