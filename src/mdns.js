@@ -20,10 +20,7 @@ const start = (port, owner, log) => {
     txt : {dup}
   });
   ad.start()
-  setInterval(() => {
-    ad.start()
-  }, 10000)
-  
+
   let self = false
 
   // watch all http servers

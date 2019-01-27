@@ -101,10 +101,15 @@ const createMonkeyAJAX = (ajax) => ({
   return ajax_deferred
 }
 
-const monkeyAJAX = () => {
-  const ajax = $.ajax.bind($)
-
-  $.ajax = createMonkeyAJAX(ajax)
+const monkeyAJAX = async () => {
+  try {
+    const ajax = $.ajax.bind($)
+  
+    $.ajax = createMonkeyAJAX(ajax)
+  } catch (e) {
+    await wait(100)
+    return monkeyAJAX()
+  }
 }
 
 const monkeyFavicon = async () => {
@@ -127,6 +132,7 @@ const monkeyFavicon = async () => {
 
 window.onload = async () => {
   console.log("LOCAQL", localforage)
+  await monkeyAJAX()
 
   monkeyFavicon().catch(e => {
     console.log("favicon error",e)
@@ -136,7 +142,5 @@ window.onload = async () => {
     console.log("GOT MDNS", msg)
     wiki.neighborhoodObject.registerNeighbor(msg)
   })
-  await wait(1000)
-  monkeyAJAX()
   ipcRenderer.send('shift',window.outerHeight)
 }
