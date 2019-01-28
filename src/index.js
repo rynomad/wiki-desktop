@@ -15,15 +15,99 @@ let mainURL;
 let mainWindow;
 const windows = new Map()
 let tray = null
+let cacheLength = 0
+let autoseed = false
+
+const updateTrayMenu = () => {
+  if (!tray) return
+  console.log("UPDATE TRAY")
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label : 'open or reset wiki',
+      click : () => {
+        if (mainWindow) {
+          mainWindow.close()
+        }
+        createWindow(mainURL)
+      }
+    },
+    {
+      label : 'neighborhood',
+      type : 'separator'
+    },
+    {
+      label : 'autoseed from cache',
+      type : 'checkbox',
+      checked : autoseed,
+      click : (item, ...args) => {
+        console.log("AUTOSEED?", item.checked)
+        autoseed = item.checked
+        if (mainWindow){
+          mainWindow.webContents.send('settings:autoseed', autoseed)
+        }
+      } 
+    },
+    {
+      label : 'cache',
+      type : 'separator'
+    },
+    {
+      label : `${cacheLength} items`,
+      enabled : false
+    },
+    {
+      label : `clear cache`,
+      click : () => {
+        console.log("clear cache")
+        if (!mainWindow) return
+        mainWindow.webContents.send('action:clearcache')
+      }
+    },
+    {
+      type : 'separator',
+      label : 'General'
+    },
+    {
+      label : 'cut',
+      role : 'cut'
+    },
+    {
+      label : 'copy',
+      role : 'copy'
+    },
+    {
+      label : 'paste',
+      role : 'paste'
+    },
+    {
+      label : 'quit',
+      role: 'quit'
+    },
+  ])
+  tray.setContextMenu(contextMenu)
+}
+
 const createWindow = (url, log_window) => {
-  // Create the browser window.
+  ipcMain.on('cache', (event, length) => {
+    console.log("cache", length)
+    if (length !== cacheLength){ 
+      cacheLength = length
+      updateTrayMenu()
+    }
+  })
+
+  ipcMain.on('settings:load', (event, {autoseed : _autoseed}) => {
+    autoseed = _autoseed
+    updateTrayMenu()
+  })
+  // Create the browser window. 
   const window = new BrowserWindow({
     width: 800,
     height: 600,
     show : false,
     webPreferences : {
       nodeIntegration: false,
-      preload : resolve(__dirname,'client.preload.js'),
+      preload : resolve(__dirname,'preload','client','index.js'),
       webSecurity : false,
       experimentalFeatures : true,
       plugins : true
@@ -40,7 +124,7 @@ const createWindow = (url, log_window) => {
   window.loadURL(url);
 
   // Open the DevTools.
-  //window.webContents.openDevTools();
+  window.webContents.openDevTools();
 
   // Emitted when the window is closed.
   window.on('closed', () => {
@@ -74,7 +158,7 @@ app.on('ready', () => {
     show : false,
     webPreferences : {
       nodeIntegration: false,
-      preload : resolve(__dirname,'log.preload.js')
+      preload : resolve(__dirname,'preload','log','index.js')
     }
   });
 
@@ -98,27 +182,12 @@ app.on('ready', () => {
 
     mdns.on('favLoc', (favLoc) => {
       tray = new Tray(favLoc)
-      const contextMenu = Menu.buildFromTemplate([
-        {
-          label : 'open or reset wiki',
-          click : () => {
-            if (mainWindow) {
-              mainWindow.close()
-            }
-            createWindow(mainURL, log_window)
-          }
-        },
-        {
-          label : 'quit',
-          role: 'quit'
-        }
-      ])
-      tray.setContextMenu(contextMenu)
+      updateTrayMenu()
     })
 
   })
 
-  log_window.loadURL('file://' + resolve(__dirname, 'startup.html'))
+  log_window.loadURL('file://' + resolve(__dirname,'pages', 'log.html'))
 
 
 });
