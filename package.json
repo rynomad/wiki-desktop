@@ -1,7 +1,7 @@
 {
-  "name": "electron-wiki",
-  "productName": "electron-wiki",
-  "version": "1.0.0",
+  "name": "wiki-desktop",
+  "productName": "wiki-desktop",
+  "version": "0.3.0",
   "description": "Federated Wiki Desktop App",
   "main": "src/index.js",
   "scripts": {
