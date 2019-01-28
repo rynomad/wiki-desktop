@@ -15,11 +15,16 @@ let mainURL;
 let mainWindow;
 const windows = new Map()
 let tray = null
+let lastTrayClick = 0
 let cacheLength = 0
 let autoseed = false
 
 const updateTrayMenu = () => {
   if (!tray) return
+  if ((Date.now() - lastTrayClick) < (10 * 1000)){
+    return setTimeout(updateTrayMenu, 1000)
+  }
+  lastTrayClick = Date.now()
   console.log("UPDATE TRAY")
   const contextMenu = Menu.buildFromTemplate([
     {
