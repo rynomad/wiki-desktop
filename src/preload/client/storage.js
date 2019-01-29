@@ -20,7 +20,7 @@ const storage = module.exports = stores.reduce((obj, name) => ({
 }),{})
 
 const methodHandler = (method) => async (event, _name) => {
-  console.log(`STORAGE: do ${method} on ${_name || 'all'}`)
+  console.log(`STORAGE: do ${method} on ${_name}`)
   const results = []
   for (const name in storage){
     if (!_name || _name === name){

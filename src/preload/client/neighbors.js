@@ -28,7 +28,7 @@ const getDiffSitemap = (old_sitemap = [], new_sitemap) => {
 }
 
 const syncSlug = async (site, slug) => new Promise((resolve,reject) => {
-  console.log('SYNC', site, slug)
+  //console.log('SYNC', site, slug)
   requestIdleCallback(() => wiki.site(site).get(`${slug}.json`, (err, data) => {
     if (err) return resolve(false)
     resolve(true)
@@ -101,11 +101,6 @@ const start =   async (settings) => {
     }
   }
 
-  settings.on('autoseed', (autoseed) => {
-    console.log("autoseed", autoseed)
-    window.location.reload()
-  })
-
   $(document.body).on('new-neighbor-done', async (event, site) => {
     console.log("NEW NEIGHBOR DONE",site)
     if (site === location.host) return console.log('ignoring self')
@@ -114,7 +109,7 @@ const start =   async (settings) => {
     known_neighbors.add(site)
     await neighborDB.setItem('list', Array.from(known_neighbors))
   })
-  
+
   syncNeighbors()
 }
 

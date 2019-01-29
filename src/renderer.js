@@ -9,10 +9,7 @@ module.exports = async ({app, logger, wiki, mdns}) => new Promise((resolve,rejec
     show : false,
     webPreferences : {
       nodeIntegration: false,
-      preload : path.resolve(__dirname,'preload','client','index.js'),
-      webSecurity : false,
-      experimentalFeatures : true,
-      plugins : true
+      preload : path.resolve(__dirname,'preload','client','index.js')
     }
   });
 

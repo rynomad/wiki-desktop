@@ -1,28 +1,41 @@
 
-window.ipcRenderer = require('electron').ipcRenderer
-const ajaxcache = require('./cache.js')
-const loadSettings = require('./settings.js')
-const localforage = require('localforage')
-const neighbors = require('./neighbors.js')
-const favicons = require('./favicons.js')
-console.log("PRELOAD")
-
-const wait = (time) => new Promise((resolve, reject) => setTimeout(() => resolve(), time || 100))
-// hack to make sure favicon resolves on first boot
-
-
-
+window.ipcRenderer = {
+  sendSync(){
+    return ''
+  }
+}
 
 window.onload = async () => {
-  const settings = await loadSettings()
-  await ajaxcache(settings)
-  await neighbors(settings)
-  favicons()
+  window.ipcRenderer = require('electron').ipcRenderer
+  plugins.security.setup()
+  try {
+    const loadSettings = require('./settings.js')
+    const neighbors = require('./neighbors.js')
+    const favicons = require('./favicons.js')
+    const cache = require('./cache.js')
+  
+    const settings = await loadSettings()
+    await cache(settings)
+    await neighbors(settings)
+    favicons()
+  
+    ipcRenderer.on('mdns', (e, msg) => {
+      console.log("GOT MDNS", msg)
+      wiki.neighborhoodObject.registerNeighbor(msg)
+    })
 
-  ipcRenderer.on('mdns', (e, msg) => {
-    console.log("GOT MDNS", msg)
-    wiki.neighborhoodObject.registerNeighbor(msg)
-  })
+    ipcRenderer.on('home', () => {
+      ipcRenderer.send('home:done')
+      setTimeout(() => {
+        location.href = location.origin + '/welcome-visitors.html'
+      },100)
+    })
+  
+    ipcRenderer.send('shift',window.outerHeight)
 
-  ipcRenderer.send('shift',window.outerHeight)
+  } catch (e){
+    console.error(e)
+  }
+
+  ipcRenderer.send('ready')
 }

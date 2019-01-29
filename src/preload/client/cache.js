@@ -15,7 +15,7 @@ const cacheURL = async (url, type = 'GET', result) => {
 const retrieveURL = async (url, type, success, error, errors) => {
   if (type != 'GET') return 
 
-  const result = cache.getItem(url).catch(e => {
+  const result = await cache.getItem(url).catch(e => {
     console.warn(e)
     return null
   })
@@ -36,11 +36,11 @@ const patch = (ajax, settings) => ({
   type,
   success : settings.cache ? (...result) => {
     success(...result)
-    //cacheURL(url, type, result)
+    cacheURL(url, type, result)
   } : success,
   error : settings.cache ? (...errors) => {
-    //retrieveURL(url, type, success, error, errors)
-    error(...errors)
+    retrieveURL(url, type, success, error, errors)
+    //error(...errors)
   } : error,
   ...args
 })

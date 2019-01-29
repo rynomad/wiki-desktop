@@ -11,7 +11,11 @@ const getDataUri = (url) => new Promise((resolve, reject) => {
       canvas.getContext('2d').drawImage(this, 0, 0);
 
       // ... or get as Data URI
-      resolve(canvas.toDataURL('image/png'));
+      try {
+        resolve(canvas.toDataURL('image/png'));
+      } catch (e){
+        resolve()
+      }
   };
 
   image.onerror = () => {
@@ -58,7 +62,7 @@ const IdleFaviconUpdater = async () => new Promise((resolve, reject) => {
 })
 
 
-module.exports = async () => {
+module.exports = async (storage) => {
   while (true){
     await IdleFaviconUpdater()
   }

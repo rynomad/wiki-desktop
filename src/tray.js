@@ -41,13 +41,17 @@ let storage = []
 let tray = null
 
 const refreshMenu = () => {
-  console.log("REFRESH MENU")
+  console.log("REFRESH MENU", storage, settings)
   tray.setContextMenu(TrayMenu({tray, storage, settings}))
 }
 
 module.exports = async ({renderer}) => {
   await faviconExists()
   tray = new Tray(favLoc)
+
+  tray.on('home', async () => {
+    await renderer.send('home')
+  })
 
   tray.on('settings:autoseed', async (value) => {
     settings.autoseed = await renderer.settings('autoseed', value)
@@ -68,8 +72,11 @@ module.exports = async ({renderer}) => {
     await renderer.storage('clear')
     tray.emit('storage:refresh')
   })
-  return refreshMenu()
-  tray.emit('settings:cache')
-  tray.emit('settings:autoseed')
-  tray.emit('storage:refresh')
+
+  renderer.onready(() => {
+    tray.emit('settings:cache')
+    tray.emit('settings:autoseed')
+    tray.emit('storage:refresh')
+  })
+
 }
