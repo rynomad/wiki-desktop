@@ -1,38 +1,40 @@
-const localforage = require('localforage')
 const {ipcRenderer} = require('electron')
 const {EventEmitter} = require('events')
 
-const settingsForage = localforage.createInstance({
-  name : 'settings'
-})
+const {settings : settingsForage} = require('./storage')
 
 const defaultSettings = {
-  autoseed : true
+  autoseed : true,
+  cache : true
 }
 
-const loadSettings = async () => {
-  const ee = new EventEmitter()
-  const settings = await settingsForage.getItem('settings')
+const registerIPCHandler = async (ee, name) => {
+  ipcRenderer.on(`settings:${name}`, async (event, value) => {
+    const result = await settingsForage[value ? 'setItem' : 'getItem'](name, value).catch(e => {
+      console.warn(e)
+      ipcRenderer.send(`settings:${name}:error`, e)
+      return null
+    })
 
-  if (!settings){
-    await settingsForage.setItem('settings', defaultSettings)
+    if (result && value){
+      ee.emit(name, result)
+      ee.emit('change')
+    }
+
+    ipcRenderer.send(`settings:${name}:done`, result)
+  })
+}
+
+module.exports = async () => {
+  const ee = new EventEmitter()
+
+  for (const name in defaultSettings){
+    const current = ((await settingsForage.getItem(name)) 
+                  || (await settingsForage.setItem(name, defaultSettings[name])))
+    
+    ee[name] = current
+    registerIPCHandler(ee, name)
   }
 
-  ipcRenderer.on('settings:autoseed', async (event, autoseed) => {
-    console.log("AUTOSEED", autoseed)
-    ee.settings = {
-      ...ee.settings,
-      autoseed
-    }
-    await settingsForage.setItem('settings', ee.settings)
-    ee.emit('change', ee.settings)
-    ee.emit('autoseed', autoseed)
-  })
-
-
-  ee.settings = settings || defaultSettings
-  ipcRenderer.send('settings:load', ee.settings)
   return ee
 }
-
-module.exports = loadSettings

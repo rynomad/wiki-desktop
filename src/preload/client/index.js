@@ -1,6 +1,6 @@
 
 window.ipcRenderer = require('electron').ipcRenderer
-const ajaxcache = require('./ajaxcache.js')
+const ajaxcache = require('./cache.js')
 const loadSettings = require('./settings.js')
 const localforage = require('localforage')
 const neighbors = require('./neighbors.js')

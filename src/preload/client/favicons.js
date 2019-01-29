@@ -1,8 +1,4 @@
-const localforage = require('localforage')
-
-const favicons = localforage.createInstance({
-  name : 'favicons'
-})
+const {favicons} = require('./storage.js')
 
 const getDataUri = (url) => new Promise((resolve, reject) => {
   var image = new Image();
@@ -46,7 +42,6 @@ const sweepFavicons = async () => {
     }
 
     if (uri){
-      console.log("replacing favicon", fav.src)
       const url = URL.createObjectURL(dataURItoBlob(uri))
       fav.setAttribute('src', url)
     }
@@ -56,18 +51,15 @@ const sweepFavicons = async () => {
 const IdleFaviconUpdater = async () => new Promise((resolve, reject) => {
   requestIdleCallback(async () => {
     await sweepFavicons().catch(e => {
-      console.warn('FAVICON ERROR',e)
+      console.warn(e)
     })
     resolve()
   })
 })
 
 
-const start = async () => {
-  let done = false
+module.exports = async () => {
   while (true){
     await IdleFaviconUpdater()
   }
 }
-
-module.exports = start

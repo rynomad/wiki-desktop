@@ -1,13 +1,7 @@
-const localforage = require('localforage')
-
-const neighborDB = localforage.createInstance({
-  name : 'neighbors'
-})
+const {neighborhood : neighborDB} = require('./storage.js')
 
 let known_neighbors = null
 let neighborhood = null
-
-const wait = async (ms) => new Promise((res) => setTimeout(res, ms))
 
 const getDiffSitemap = (old_sitemap = [], new_sitemap) => {
   const diff = []
@@ -57,8 +51,6 @@ const syncSitemap = async (site, sitemap) => {
   console.log('sync sitemap done', site)
 }
 
-const lastSync = new Map()
-
 const syncNeighbor = async (site) => new Promise((resolve,reject) => {
   console.log('request idle', site)
   requestIdleCallback(() => {
@@ -98,11 +90,11 @@ const syncNeighbors = async () => {
 }
 
 const start =   async (settings) => {
-  console.log("start neighbors", settings.settings.autoseed)
+  console.log("start neighbors", settings.autoseed)
   known_neighbors = new Set((await neighborDB.getItem('list')) || [])
   neighborhood = new Set()
 
-  if (settings.settings.autoseed){
+  if (settings.autoseed){
     for (const site of known_neighbors){
       console.log('populating', site, 'from known neighbors')
       wiki.neighborhoodObject.registerNeighbor(site)
@@ -122,9 +114,7 @@ const start =   async (settings) => {
     known_neighbors.add(site)
     await neighborDB.setItem('list', Array.from(known_neighbors))
   })
-
-
-
+  
   syncNeighbors()
 }
 
