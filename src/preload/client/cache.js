@@ -34,14 +34,14 @@ const patch = (ajax, settings) => ({
 }) => ajax({
   url,
   type,
-  success : settings.cache ? (...result) => {
+  success :(...result) => {
     success(...result)
     cacheURL(url, type, result)
-  } : success,
-  error : settings.cache ? (...errors) => {
+  },
+  error : (...errors) => {
     retrieveURL(url, type, success, error, errors)
     //error(...errors)
-  } : error,
+  },
   ...args
 })
 

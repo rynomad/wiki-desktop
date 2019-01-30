@@ -13,6 +13,7 @@ window.onload = async () => {
     const neighbors = require('./neighbors.js')
     const favicons = require('./favicons.js')
     const cache = require('./cache.js')
+    require('./export.js')
   
     const settings = await loadSettings()
     await cache(settings)

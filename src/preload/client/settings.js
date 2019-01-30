@@ -5,7 +5,7 @@ const {settings : settingsForage} = require('./storage')
 
 const defaultSettings = {
   autoseed : true,
-  cache : true
+  autosync : true,
 }
 
 const registerIPCHandler = async (ee, name) => {

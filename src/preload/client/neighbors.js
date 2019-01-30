@@ -94,13 +94,6 @@ const start =   async (settings) => {
   known_neighbors = new Set((await neighborDB.getItem('list')) || [])
   neighborhood = new Set()
 
-  if (settings.autoseed){
-    for (const site of known_neighbors){
-      console.log('populating', site, 'from known neighbors')
-      wiki.neighborhoodObject.registerNeighbor(site)
-    }
-  }
-
   $(document.body).on('new-neighbor-done', async (event, site) => {
     console.log("NEW NEIGHBOR DONE",site)
     if (site === location.host) return console.log('ignoring self')
@@ -110,7 +103,16 @@ const start =   async (settings) => {
     await neighborDB.setItem('list', Array.from(known_neighbors))
   })
 
-  syncNeighbors()
+  if (settings.autoseed){
+    for (const site of known_neighbors){
+      console.log('populating', site, 'from known neighbors')
+      wiki.neighborhoodObject.registerNeighbor(site)
+    }
+  }
+
+  if (settings.autosync){
+    syncNeighbors()
+  }
 }
 
 module.exports = start

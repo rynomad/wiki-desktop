@@ -58,8 +58,8 @@ module.exports = async ({renderer}) => {
     refreshMenu()
   })
 
-  tray.on('settings:cache', async (value) => {
-    settings.cache = await renderer.settings('cache', value)
+  tray.on('settings:autosync', async (value) => {
+    settings.autosync = await renderer.settings('autosync', value)
     refreshMenu()
   })
 

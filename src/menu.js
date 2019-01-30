@@ -12,15 +12,15 @@ const Tray = ({tray, settings, storage}) =>
       label : 'settings',
       submenu : [
         {
-          label : 'cache for offline',
+          label : 'sync neighbors proactively',
           type : 'checkbox',
-          checked : settings.cache,
+          checked : settings.autosync,
           click : (item, ...args) => {
-            tray.emit('settings:cache', item.checked)
+            tray.emit('settings:autosync', item.checked)
           }          
         },
         {
-          label : 'autoseed neighbors',
+          label : 'seed neighbors from cache',
           type : 'checkbox',
           checked : settings.autoseed,
           click : (item, ...args) => {

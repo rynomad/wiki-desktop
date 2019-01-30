@@ -3,6 +3,8 @@ const {favicons} = require('./storage.js')
 const getDataUri = (url) => new Promise((resolve, reject) => {
   var image = new Image();
 
+  image.crossOrigin = 'anonymous'
+
   image.onload = function () {
       var canvas = document.createElement('canvas');
       canvas.width = this.naturalWidth; // or 'width' if you want a special/scaled size
@@ -14,6 +16,7 @@ const getDataUri = (url) => new Promise((resolve, reject) => {
       try {
         resolve(canvas.toDataURL('image/png'));
       } catch (e){
+        console.warn(e)
         resolve()
       }
   };
