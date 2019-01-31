@@ -81,7 +81,15 @@ window.importWik = async (wik) => {
   await routes.setItem(origin, `//${origin}`).then(res => {
     console.log("SET PREFIX", res)
   })
+  function listener (event, site){
+    if (site === origin){
+      $(document.body).off('new-neighbor-done', listener)
+      wiki.doInternalLink(wik.entry, null, origin)
+    }
+    console.log('wik neighbor done', site)
+  }
+
+  $(document.body).on('new-neighbor-done', listener)
   wiki.neighborhoodObject.registerNeighbor(origin)
-  wiki.doInternalLink(wik.entry, null, origin)
 }
 
