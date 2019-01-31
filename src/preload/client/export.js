@@ -1,3 +1,9 @@
+
+require('coffeescript');
+require('coffeescript/register');
+const drop = require('wiki-client/lib/drop.coffee')
+const _link = require('wiki-client/lib/link.coffee')
+console.log("DROP", drop)
 const {cache, favicons, neighborhoods} = require('./storage')
 const routes = require('localforage').createInstance({name : 'routes'})
 const pako = require('pako')
@@ -120,20 +126,39 @@ window.export = (wik) => {
   console.log(path)
   fs.writeFileSync(path, deflate(wik))
 }
-$("html").on("dragover", function(event) {
-  event.preventDefault();  
-  event.stopPropagation();
-  console.log('dragging');
-});
 
-$("html").on("dragleave", function(event) {
-  event.preventDefault();  
-  event.stopPropagation();
-  console.log('dragging');
-});
-
-$("html").on("drop", function(event) {
-  event.preventDefault();  
-  event.stopPropagation();
-  console.log("Dropped!",event);
-});
+$('.main').unbind('drop')
+$('.main').bind('drop', drop.dispatch({
+  page: (item) => link.doInternalLink(item.slug, null, item.site),
+  file: (file) => {
+    console.log("FILE", file)
+    reader = new FileReader()
+    if (file.type == 'application/json'){
+      reader.onload = (e) => {
+        const result = e.target.result
+        const pages = JSON.parse(result)
+        const resultPage = wiki.newPage()
+        resultPage.setTitle("Import from #{file.name}")
+        resultPage.addParagraph(`
+          Import of #{Object.keys(pages).length} pages
+          (#{commas file.size} bytes)
+          from an export file dated #{file.lastModifiedDate}.
+          `)
+        resultPage.addItem({type: 'importer', pages: pages})
+        wiki.showResult(resultPage)
+      }
+    } else if (file.name.split('.').pop() === 'wik'){
+      reader.onload = async (e) => {
+        const result = e.target.result
+        const json = inflate(result)
+        importWik(json)
+      }
+    } else {
+      return
+    }
+    reader.readAsText(file)
+  },
+  punt : (e) => {
+    console.log("PUNT", e)
+  }
+}))
