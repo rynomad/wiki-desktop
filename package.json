@@ -47,6 +47,7 @@
     "mdns": "^2.4.0",
     "mdns-js": "^1.0.3",
     "nbonjour": "^3.6.3",
+    "pako": "^1.0.8",
     "wiki": "^0.16.1",
     "wiki-security-desktop": "file:../wiki-security-desktop-0.2.0.tgz"
   },

@@ -1,5 +1,21 @@
 const {cache, favicons, neighborhoods} = require('./storage')
 const routes = require('localforage').createInstance({name : 'routes'})
+const pako = require('pako')
+
+window.deflate = (json) => {
+  const str = JSON.stringify(json)
+  console.log('compressing', str.length, 'bytes')
+  const bin = pako.deflate(str, {to : "string"})
+  console.log('compressed to ', bin.length, 'bytes')
+  return bin
+}
+window.inflate = (bin) => {
+  console.log('decompressing', bin.length, 'bytes')
+  const str = pako.inflate(bin, {to : 'string'})
+  console.log('decompressed to', str.length, 'bytes')
+  const json = JSON.parse(str)
+  return json
+}
 
 
 const getLinks = (story) => 
@@ -93,3 +109,31 @@ window.importWik = async (wik) => {
   wiki.neighborhoodObject.registerNeighbor(origin)
 }
 
+
+
+window.export = (wik) => {
+  const {dialog} = require('electron').remote.require('electron')
+  const fs = require('fs')
+  const path = dialog.showSaveDialog({
+    title : wikOrigin(wik)
+  })
+  console.log(path)
+  fs.writeFileSync(path, deflate(wik))
+}
+$("html").on("dragover", function(event) {
+  event.preventDefault();  
+  event.stopPropagation();
+  console.log('dragging');
+});
+
+$("html").on("dragleave", function(event) {
+  event.preventDefault();  
+  event.stopPropagation();
+  console.log('dragging');
+});
+
+$("html").on("drop", function(event) {
+  event.preventDefault();  
+  event.stopPropagation();
+  console.log("Dropped!",event);
+});
