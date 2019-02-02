@@ -64,6 +64,7 @@ const IdleFaviconUpdater = async () => new Promise((resolve, reject) => {
   })
 })
 
+const wait = () => new Promise(resolve => setTimeout(resolve, 5000))
 
 module.exports = async (storage) => {
   while (true){

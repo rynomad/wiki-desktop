@@ -39,8 +39,8 @@ module.exports = async ({app, logger}) => new Promise((resolve,reject) => {
     logger.log("WIKI: ", msg)
 
     // hax
-    if (msg.indexOf('[[[OWNER:') >= 0){
-      const [_, name, secret] = msg.split(':')
+    if (msg.indexOf('[[[OWNER_:_') >= 0){
+      const [_, name, secret] = msg.split('_:_')
       wiki.owner = {name, secret}
       logger.log("got owner", wiki.owner)
     }

@@ -1,9 +1,10 @@
 const {cache} = require('./storage.js')
 const {clone} = require('./json.js')
 
-const ajaxTimeout = (url) => navigator.onLine ? 3000 
-                          :  url.indexOf("//") === -1 ? 1000 
-                          :  1
+const ajaxTimeout = (url, type) => type === "PUT" ? 0 
+                                :  navigator.onLine ? 3000 
+                                :  url.indexOf("//") === -1 ? 1000 
+                                :  1
 
 const cacheURL = async (url, type = 'GET', result) => {
   if (type != 'GET') return

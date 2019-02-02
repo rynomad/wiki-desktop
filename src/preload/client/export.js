@@ -8,7 +8,7 @@ const { Menu, MenuItem, dialog } = remote
 const { rogers } = require('./neighbors.js')
 
 console.log("DROP", drop)
-const {cache, favicons, neighborhoods} = require('./storage')
+const {cache, favicons, neighborhood} = require('./storage')
 const routes = require('localforage').createInstance({name : 'routes'})
 const pako = require('pako')
 const nacl = require('tweetnacl')
@@ -133,6 +133,58 @@ const entry = ({title, story, journal}) => ({
 const wikOrigin = ({nonce, entry, owner, box}, signer) => `${signer.substr(0, 8)}.${owner}.wik`
 const wikSitemap = ({pages}) => pages.map(([_, page]) => page).map(entry)
 
+const getDiffSitemap = (old_sitemap = [], new_sitemap = [], pages) => {
+  const diff = []
+  const old_time = new Map()
+  
+  for (const {slug, date} of old_sitemap){
+    old_time.set(slug, date)
+  }
+
+  for (const page of new_sitemap){
+    if (!old_time.has(page.slug)){
+      diff.push(page)
+      continue
+    }
+
+    const _old_time = Number.parseInt(old_time.get(page.slug))
+    const _new_time = Number.parseInt(page.date)
+    if (_new_time > _old_time){
+      diff.push(page)
+    }
+  }
+
+  return diff
+}
+
+const mergeSitemaps = (old_sitemap, new_sitemap) => {
+  let merged = []
+  const seen = new Map()
+  const updates = new Set()
+  
+  for (const page of old_sitemap){
+    seen.set(page.slug, page.date)
+    merged.push(page)
+  }
+
+  for (const page of new_sitemap){
+    if (!seen.has(page.slug)){
+      merged.push(page)
+      updates.add(page.slug)
+    }
+
+    const comp = seen.get(page.slug)
+
+    if (page.date > comp){
+      updates.add(page.slug)
+      seen.set(page.slug, page.date)
+      merged = merged.filter(i => i.slug !== page.slug).concat([page])
+    }
+
+  }
+
+  return {merged, updates}
+}
 
 window.importWik = async (signed) => {
   let wik = null
@@ -146,11 +198,15 @@ window.importWik = async (signed) => {
   //FIX
   const origin = wikOrigin(wik, signed.signer)
   const sitemap = wikSitemap(wik)
+  const old_sitemap = (await neighborhood.getItem(origin)) || []
+  const {merged, updates} = mergeSitemaps(old_sitemap, sitemap)
 
   for (const [slug, page] of wik.pages) {
-    await cache.setItem(`//${origin}/${slug}.json`, [page, 'success'])
+    if (updates.has(slug)){
+      await cache.setItem(`//${origin}/${slug}.json`, [page, 'success'])
+    }
   }
-  await cache.setItem(`//${origin}/system/sitemap.json`, [sitemap, 'success'])
+  await cache.setItem(`//${origin}/system/sitemap.json`, [merged, 'success'])
   await cache.setItem(`//${origin}/favicon.png`, [wik.favicon, 'success'])
   await favicons.setItem(`http://${origin}/favicon.png`, wik.favicon)
   console.log(`SET    //${origin}`)
@@ -194,16 +250,6 @@ window.export = (wik) => {
 
 $('.main').contextmenu((e) => {
   console.log("main context menu")
-
-  const menu = new Menu()
-  menu.append(new MenuItem({ 
-    label: 'import .wik file', 
-    click() { 
-      
-
-    } 
-  }))
-  menu.popup({ window: remote.getCurrentWindow() })
 })
 
 $('.main').delegate('.page:not(.remote):not(.plugin)', 'contextmenu', function (e) {

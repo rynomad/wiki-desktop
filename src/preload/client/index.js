@@ -14,6 +14,7 @@ window.ipcRenderer = {
 
 window.onload = async () => {
   window.ipcRenderer = require('electron').ipcRenderer
+
   try {
     const loadSettings = require('./settings.js')
     const neighbors = require('./neighbors.js')
@@ -24,7 +25,10 @@ window.onload = async () => {
     const settings = await loadSettings()
     await cache(settings)
     await neighbors(settings)
-    plugins.security.setup()
+    setTimeout(() => {
+
+      plugins.security.setup()
+    },2000)
     favicons()
   
     ipcRenderer.on('mdns', (e, msg) => {
