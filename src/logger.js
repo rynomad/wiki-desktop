@@ -17,6 +17,7 @@ module.exports = async () => new Promise((resolve,reject) => {
 
   const logger = {
     log(...args){
+      console.log(...args)
       ipc.log(...args)
     },
     show(){

@@ -1,4 +1,8 @@
 const {ipcMain} = require('electron')
+const fs = require('fs')
+const path = require('path')
+const getUserHome = () => process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE
+
 
 const Renderer = ({wiki, logger, window}) => {
   const ready_fns = []
@@ -20,6 +24,10 @@ const Renderer = ({wiki, logger, window}) => {
   ipcMain.on('id', (event) => {
     logger.log("GOT ID REQUEST", wiki.owner.secret)
     event.returnValue = wiki.owner.secret
+  })
+
+  ipcMain.on('owner', (event) => {
+    event.returnValue = fs.readFileSync(path.join(getUserHome(),'.wiki','status','owner.json'))
   })
 
   return {

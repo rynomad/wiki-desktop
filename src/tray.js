@@ -10,7 +10,10 @@ const favLoc = path.join(getUserHome(), '.wiki', 'status', 'favicon.png')
 
 const _faviconExists = async () => new Promise((resolve,reject) => {
   try {
-    fs.exists(favLoc, resolve)
+    fs.access(favLoc, (err) => {
+      console.log('access?',err)
+      resolve(err ? false : true)
+    })
   } catch (e){
     resolve(false)
   }
@@ -19,7 +22,7 @@ const _faviconExists = async () => new Promise((resolve,reject) => {
 const defer = async () => new Promise(r => setTimeout(r, 50))
 
 const faviconExists = async (_resolve) => {
-  while(!_faviconExists()) await defer()
+  while(!(await _faviconExists())) await defer()
 }
 
 const getStorageUsage = async (renderer) => {
@@ -47,6 +50,7 @@ const refreshMenu = () => {
 
 module.exports = async ({renderer}) => {
   await faviconExists()
+
   tray = new Tray(favLoc)
 
   tray.on('home', async () => {

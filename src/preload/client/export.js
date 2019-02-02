@@ -3,10 +3,15 @@ require('coffeescript');
 require('coffeescript/register');
 const drop = require('wiki-client/lib/drop.coffee')
 const _link = require('wiki-client/lib/link.coffee')
+const { remote } = require('electron')
+const { Menu, MenuItem, dialog } = remote
+const { rogers } = require('./neighbors.js')
+
 console.log("DROP", drop)
 const {cache, favicons, neighborhoods} = require('./storage')
 const routes = require('localforage').createInstance({name : 'routes'})
 const pako = require('pako')
+const nacl = require('tweetnacl')
 
 window.deflate = (json) => {
   const str = JSON.stringify(json)
@@ -21,6 +26,44 @@ window.inflate = (bin) => {
   console.log('decompressed to', str.length, 'bytes')
   const json = JSON.parse(str)
   return json
+}
+
+let keys = null
+
+const getKeys = () => {
+  const string = ipcRenderer.sendSync('owner')
+  const json = JSON.parse(string)
+
+  keys = {
+    box : {
+      publicKey : Buffer.from(json.box.publicKey, 'hex'),
+      secretKey : Buffer.from(json.box.secretKey, 'hex')
+    },
+    sign : {
+      publicKey : Buffer.from(json.sign.publicKey, 'hex'),
+      secretKey : Buffer.from(json.sign.secretKey, 'hex')    
+    }
+  }
+}
+
+window.sign = async (json) => {
+  if (!keys) getKeys()
+  console.log(keys)
+  const buf = Buffer.from(JSON.stringify(json))
+  const signature = Buffer.from(nacl.sign.detached(buf, keys.sign.secretKey))
+  return {
+    signer : keys.sign.publicKey.toString('hex'), 
+    signature : signature.toString('hex'),
+    json
+  }
+  console.log(signature.toString())
+}
+window.verify = async ({signer, signature, json}) => {
+  return nacl.sign.detached.verify(
+    Buffer.from(JSON.stringify(json)), 
+    Buffer.from(signature, 'hex'),
+    Buffer.from(signer, 'hex')
+  ) && json
 }
 
 
@@ -61,7 +104,10 @@ window.Wik = async (
     await Wik(_page, found, failed, nonce, true)
   }
 
+  if (!keys) getKeys()
+
   return ({
+    box : keys.box.publicKey.toString('hex'),
     entry : wiki.asSlug(page.title),
     nonce,
     owner : $('#site-owner span').text(),
@@ -84,13 +130,21 @@ const entry = ({title, story, journal}) => ({
   synopsis : wiki.createSynopsis({story})
 })
 
-const wikOrigin = ({nonce, entry, owner}) => `${nonce}.${entry}.${owner}.wik`
+const wikOrigin = ({nonce, entry, owner, box}, signer) => `${signer.substr(0, 8)}.${owner}.wik`
 const wikSitemap = ({pages}) => pages.map(([_, page]) => page).map(entry)
 
 
-window.importWik = async (wik) => {
+window.importWik = async (signed) => {
+  let wik = null
+  if (!(wik = await verify(signed))){
+    console.error('')
+    dialog.showErrorBox('Invalid .wik File', 'the wik file was improperly signed, ignoring')
+    return 
+  }
   console.log(wik)
-  const origin = wikOrigin(wik)
+
+  //FIX
+  const origin = wikOrigin(wik, signed.signer)
   const sitemap = wikSitemap(wik)
 
   for (const [slug, page] of wik.pages) {
@@ -103,29 +157,74 @@ window.importWik = async (wik) => {
   await routes.setItem(origin, `//${origin}`).then(res => {
     console.log("SET PREFIX", res)
   })
-  function listener (event, site){
-    if (site === origin){
-      $(document.body).off('new-neighbor-done', listener)
-      wiki.doInternalLink(wik.entry, null, origin)
+  const neighbor = $(`span.neighbor[data-site="${origin}"]`)
+  console.log('import did find neighbor?',neighbor)
+  if (!neighbor.length){
+    function listener (event, site){
+      if (site === origin){
+        $(document.body).off('new-neighbor-done', listener)
+        wiki.doInternalLink(wik.entry, null, origin)
+      }
+      console.log('wik neighbor done', site)
     }
-    console.log('wik neighbor done', site)
+  
+    $(document.body).on('new-neighbor-done', listener)
+    wiki.neighborhoodObject.registerNeighbor(origin)
+  } else {
+    rogers.set(origin, 0)
+    wiki.doInternalLink(wik.entry, null, origin)
   }
 
-  $(document.body).on('new-neighbor-done', listener)
-  wiki.neighborhoodObject.registerNeighbor(origin)
+
 }
 
 
 
 window.export = (wik) => {
-  const {dialog} = require('electron').remote.require('electron')
   const fs = require('fs')
+  
   const path = dialog.showSaveDialog({
-    title : wikOrigin(wik)
+    title : `Export .wik file for "${wik.json.entry}"`,
+    defaultPath : `${wik.json.entry}.${wikOrigin(wik.json, wik.signer)}`
   })
+
   console.log(path)
   fs.writeFileSync(path, deflate(wik))
 }
+
+$('.main').contextmenu((e) => {
+  console.log("main context menu")
+
+  const menu = new Menu()
+  menu.append(new MenuItem({ 
+    label: 'import .wik file', 
+    click() { 
+      
+
+    } 
+  }))
+  menu.popup({ window: remote.getCurrentWindow() })
+})
+
+$('.main').delegate('.page:not(.remote):not(.plugin)', 'contextmenu', function (e) {
+  e.preventDefault()
+  e.stopPropagation()
+  console.log($(this))
+  const page = $(this).parents('.page').data('data') || $(this).data('data')
+  const menu = new Menu()
+  menu.append(new MenuItem({ 
+    label: 'export .wik file', 
+    click : async () => {
+      console.log(page)
+      const json = await Wik(page)
+      const wik = await sign(json)
+      console.log("SIGNED", wik)
+      window.export(wik)
+    } 
+  }))
+  menu.popup({ window: remote.getCurrentWindow() })
+  console.log('page context menu')
+})
 
 $('.main').unbind('drop')
 $('.main').bind('drop', drop.dispatch({

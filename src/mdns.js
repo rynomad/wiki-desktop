@@ -30,10 +30,12 @@ const start = ({app, logger}) => new Promise((resolve,reject) => {
     const _dup = service.txt
                ? service.txt.map(t => t.split('=')).filter(a => a[0] === 'dup').map(a => a[1])[0]
                : null
+    //console.log("FOUND SERVICE", service)
     if (!_dup || ee.wikis.has(_dup)) return
 
     const url = service.host + ':' + service.port
     ee.wikis.set(_dup, url)
+    console.log("FOUND WIKI", service)
 
     if (_dup === dup) {
       ee.self = service.type[0].name + '://' + url

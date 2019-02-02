@@ -14,7 +14,7 @@ module.exports = async ({app, logger, wiki, mdns}) => new Promise((resolve,rejec
   });
 
   // and load the index.html of the app.
-  window.loadURL('http://localhost:3000');
+  window.loadURL(mdns.self);
 
   // Open the DevTools.
   window.webContents.openDevTools();
