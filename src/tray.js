@@ -6,7 +6,7 @@ const {Tray : TrayMenu} = require('./menu.js')
 
 const getUserHome = () => process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE
 
-const favLoc = path.join(getUserHome(), '.wiki', 'status', 'favicon.png')
+const favLoc = path.join(getUserHome(), '.wiki-desktop', 'status', 'favicon.png')
 
 const _faviconExists = async () => new Promise((resolve,reject) => {
   try {

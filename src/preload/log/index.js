@@ -29,7 +29,7 @@ window.onload = () => {
   const fs = require('fs-jetpack')
   const os = require('os')
   const path = require('path')
-  const imgpath = path.join(os.homedir(), '.wiki','status','favicon.png')
+  const imgpath = path.join(os.homedir(), '.wiki-desktop','status','favicon.png')
 
   if (fs.exists(imgpath)) return
 

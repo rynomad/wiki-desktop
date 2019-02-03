@@ -27,7 +27,7 @@ const Renderer = ({wiki, logger, window}) => {
   })
 
   ipcMain.on('owner', (event) => {
-    event.returnValue = fs.readFileSync(path.join(getUserHome(),'.wiki','status','owner.json'))
+    event.returnValue = fs.readFileSync(path.join(getUserHome(),'.wiki-desktop','status','owner.json'))
   })
 
   return {

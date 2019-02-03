@@ -17,7 +17,7 @@ module.exports = async ({app, logger, wiki, mdns}) => new Promise((resolve,rejec
   window.loadURL("http://localhost:3000");
 
   // Open the DevTools.
-  window.webContents.openDevTools();
+  //window.webContents.openDevTools();
 
   window.once('ready-to-show', () => {
     window.show()
