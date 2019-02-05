@@ -77,7 +77,12 @@ const Renderer = ({wiki, logger, window}) => {
 
 const Logger = (window) => ({
   log(...args){
-    window.webContents.send('log', args.join(' '))
+    try {
+      window.webContents.send('log', args.join(' '))
+    } catch (e) {
+      //console.log(e)
+      // window has been destroyed
+    }
   }
 })
 
