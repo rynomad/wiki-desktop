@@ -20,6 +20,7 @@ window.onload = async () => {
     const neighbors = require('./neighbors.js')
     const favicons = require('./favicons.js')
     const cache = require('./cache.js')
+    const ui = require('./ui.js')
   
     const settings = await loadSettings()
     await cache(settings)
@@ -29,6 +30,7 @@ window.onload = async () => {
       require('./export.js')
     },2000)
     favicons()
+    ui()
   
     ipcRenderer.on('mdns', (e, msg) => {
       console.log("GOT MDNS", msg)

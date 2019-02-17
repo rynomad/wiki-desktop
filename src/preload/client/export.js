@@ -248,29 +248,18 @@ window.export = (wik) => {
   fs.writeFileSync(path, deflate(wik))
 }
 
+module.exports = async (page) => {
+  console.log(page)
+  const json = await Wik(page)
+  const wik = await sign(json)
+  console.log("SIGNED", wik)
+  window.export(wik)
+}
+
 $('.main').contextmenu((e) => {
   console.log("main context menu")
 })
 
-$('.main').delegate('.page:not(.remote):not(.plugin)', 'contextmenu', function (e) {
-  e.preventDefault()
-  e.stopPropagation()
-  console.log($(this))
-  const page = $(this).parents('.page').data('data') || $(this).data('data')
-  const menu = new Menu()
-  menu.append(new MenuItem({ 
-    label: 'export .wik file', 
-    click : async () => {
-      console.log(page)
-      const json = await Wik(page)
-      const wik = await sign(json)
-      console.log("SIGNED", wik)
-      window.export(wik)
-    } 
-  }))
-  menu.popup({ window: remote.getCurrentWindow() })
-  console.log('page context menu')
-})
 
 $('.main').unbind('drop')
 $('.main').bind('drop', drop.dispatch({

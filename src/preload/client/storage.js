@@ -48,3 +48,5 @@ for (const method of methods){
   registerIPCHandler(method)
   console.log('STORAGE: registered handler for ', method)
 }
+
+window.createStorage = createInstance 
