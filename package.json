@@ -51,7 +51,8 @@
     "pako": "^1.0.8",
     "tweetnacl": "^1.0.1",
     "wiki": "^0.16.1",
-    "wiki-security-desktop": "git+https://github.com/rynomad/wiki-security-desktop.git"
+    "wiki-security-desktop": "git+https://github.com/rynomad/wiki-security-desktop.git",
+    "wiki-plugin-home": "git+https://github.com/rynomad/wiki-plugin-home.git"
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.0.0-beta.22",
