@@ -12,7 +12,10 @@ window.ipcRenderer = {
   }
 }
 
-window.onload = async () => {
+const wait = async () => new Promise(resolve => setTimeout(resolve, 5000))
+
+const _onload = async () => {
+  await wait()
   window.ipcRenderer = require('electron').ipcRenderer
 
   try {
@@ -27,8 +30,8 @@ window.onload = async () => {
     await neighbors(settings)
     setTimeout(() => {
       plugins.security.setup()
-      require('./export.js')
-    },2000)
+      require('./export.js').init()
+    },5000)
     favicons()
     ui()
   
@@ -51,4 +54,10 @@ window.onload = async () => {
   }
 
   ipcRenderer.send('ready')
+}
+
+window.onload = () => {
+  _onload().catch(e => {
+    console.log("upper",e)
+  })
 }

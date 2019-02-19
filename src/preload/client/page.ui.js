@@ -2,7 +2,7 @@ const CLASS_HIDDEN = 'page-hidden'
 const { remote } = require('electron')
 const { Menu, MenuItem} = remote
 const crypto = require('crypto')
-const Wik = require('./export.js')
+const {Wik} = require('./export.js')
 
 findScrollContainer = () =>{
   const scrolled = $("body, html").filter(() => $(window).scrollLeft() > 0)

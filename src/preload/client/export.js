@@ -248,7 +248,7 @@ window.export = (wik) => {
   fs.writeFileSync(path, deflate(wik))
 }
 
-module.exports = async (page) => {
+const Wik = async (page) => {
   console.log(page)
   const json = await Wik(page)
   const wik = await sign(json)
@@ -256,43 +256,49 @@ module.exports = async (page) => {
   window.export(wik)
 }
 
-$('.main').contextmenu((e) => {
-  console.log("main context menu")
-})
+const init = () => {
 
-
-$('.main').unbind('drop')
-$('.main').bind('drop', drop.dispatch({
-  page: (item) => link.doInternalLink(item.slug, null, item.site),
-  file: (file) => {
-    console.log("FILE", file)
-    reader = new FileReader()
-    if (file.type == 'application/json'){
-      reader.onload = (e) => {
-        const result = e.target.result
-        const pages = JSON.parse(result)
-        const resultPage = wiki.newPage()
-        resultPage.setTitle("Import from #{file.name}")
-        resultPage.addParagraph(`
-          Import of #{Object.keys(pages).length} pages
-          (#{commas file.size} bytes)
-          from an export file dated #{file.lastModifiedDate}.
-          `)
-        resultPage.addItem({type: 'importer', pages: pages})
-        wiki.showResult(resultPage)
+  $('.main').contextmenu((e) => {
+    console.log("main context menu")
+  })
+  
+  
+  $('.main').unbind('drop')
+  $('.main').bind('drop', drop.dispatch({
+    page: (item) => link.doInternalLink(item.slug, null, item.site),
+    file: (file) => {
+      console.log("FILE", file)
+      reader = new FileReader()
+      if (file.type == 'application/json'){
+        reader.onload = (e) => {
+          const result = e.target.result
+          const pages = JSON.parse(result)
+          const resultPage = wiki.newPage()
+          resultPage.setTitle("Import from #{file.name}")
+          resultPage.addParagraph(`
+            Import of #{Object.keys(pages).length} pages
+            (#{commas file.size} bytes)
+            from an export file dated #{file.lastModifiedDate}.
+            `)
+          resultPage.addItem({type: 'importer', pages: pages})
+          wiki.showResult(resultPage)
+        }
+      } else if (file.name.split('.').pop() === 'wik'){
+        reader.onload = async (e) => {
+          const result = e.target.result
+          const json = inflate(result)
+          importWik(json)
+        }
+      } else {
+        return
       }
-    } else if (file.name.split('.').pop() === 'wik'){
-      reader.onload = async (e) => {
-        const result = e.target.result
-        const json = inflate(result)
-        importWik(json)
-      }
-    } else {
-      return
+      reader.readAsText(file)
+    },
+    punt : (e) => {
+      console.log("PUNT", e)
     }
-    reader.readAsText(file)
-  },
-  punt : (e) => {
-    console.log("PUNT", e)
-  }
-}))
+  }))
+  
+}
+
+module.exports = {Wik, init}
