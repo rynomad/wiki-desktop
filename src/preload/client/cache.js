@@ -7,6 +7,10 @@ const ajaxTimeout = (url, type) => type === "PUT" ? 0
                                 :  1
 
 const cacheURL = async (url, type = 'GET', result) => {
+  if (type === 'DELETE'){
+    await cache.removeItem(url)
+  }
+
   if (type != 'GET') return
 
   const put = await clone(result).catch(e => {
