@@ -34,7 +34,9 @@ module.exports = async ({app, logger}) => new Promise(async (resolve,reject) => 
     '--packageDir',
     path.resolve(__dirname,'..','node_modules'),
     '--data',
-    wikiDir
+    wikiDir,
+    '--home',
+    'welcome-home'
   ], {stdio : ['pipe','pipe','pipe','ipc']})
 
   wiki.owner = {
