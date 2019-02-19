@@ -106,6 +106,19 @@ const update = () => {
             Wik($page.data('data'))
           }
         }))
+
+        menu.append(new MenuItem({
+          label : 'delete page',
+          click : () => {
+            const slug = $page.attr('id')
+            wiki.origin.delete(`${slug}.json`, (e) => {
+              $page.find('.button.close').trigger('click')
+              wiki.neighborhood[location.host] = null
+              wiki.neighborhoodObject.registerNeighbor(location.host) 
+              console.log('delete?', e)
+            })    
+          }
+        }))
       } else {
         menu.append(new MenuItem({ 
           label: 'fork page', 
