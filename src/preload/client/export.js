@@ -117,7 +117,7 @@ window.Wik = async (
 }
 
 const lastEdit = (journal) => {
-  journal = journal.reverse()
+  journal = JSON.parse(JSON.stringify(journal)).reverse()
   for (const action of journal){
     if (action.date && action.type != 'fork') return action.date
   }
