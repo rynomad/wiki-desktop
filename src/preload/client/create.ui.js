@@ -76,6 +76,8 @@ const update = () => {
         ]}},
         (err) => {
           console.log('put page?', title, err)
+          wiki.neighborhood[location.host] = null
+          wiki.neighborhoodObject.registerNeighbor(location.host)
           wiki.doInternalLink(title)
 
         }
