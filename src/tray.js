@@ -1,12 +1,14 @@
 const fs = require('fs')
 const path = require('path')
-const {Tray} = require('electron')
+const {Tray, dialog} = require('electron')
 
 const {Tray : TrayMenu} = require('./menu.js')
 
 const getUserHome = () => process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE
 
 const favLoc = path.join(getUserHome(), '.wiki-desktop', 'status', 'favicon.png')
+const ownerLoc = path.join(getUserHome(), '.wiki-desktop', 'status','owner.json')
+
 
 const _faviconExists = async () => new Promise((resolve,reject) => {
   try {
@@ -75,6 +77,30 @@ module.exports = async ({renderer}) => {
   tray.on('storage:clear', async () => {
     await renderer.storage('clear')
     tray.emit('storage:refresh')
+  })
+
+  tray.on('identity:export', async () => {
+    const owner = JSON.parse(fs.readFileSync(ownerLoc).toString())
+    const favicon = fs.readFileSync(favLoc).toString('hex')
+    const savepath = dialog.showSaveDialog({
+      title : `Export .identity file for this wiki`,
+      defaultPath : `wiki.identity`
+    })
+    fs.writeFileSync(savepath, JSON.stringify({
+      owner,
+      favicon
+    }))
+  })
+
+  tray.on('identity:import', async () => {
+    const identity = dialog.showOpenDialog({
+      title : `Import .identity file for this wiki (WARNING, CANNOT UNDO)`,
+      defaultPath : `wiki.identity`   
+    })
+    console.log('dialog', identity)
+    const {owner, favicon} = JSON.parse(fs.readFileSync(identity[0]).toString())
+    fs.writeFileSync(favLoc, Buffer.from(favicon, 'hex'))
+    fs.writeFileSync(ownerLoc, JSON.stringify(owner, null, 2))
   })
 
   renderer.onready(async () => {

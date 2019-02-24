@@ -50,6 +50,23 @@ const Tray = ({tray, settings, storage}) =>
       })))
     },
     {
+      label : 'identity',
+      submenu : [
+        {
+          label : 'export',
+          click : () => {
+            tray.emit('identity:export')
+          }
+        },
+        {
+          label : 'import',
+          click : () => {
+            tray.emit('identity:import')
+          }
+        }
+      ]
+    },
+    {
       type : 'separator'
     },
     {
