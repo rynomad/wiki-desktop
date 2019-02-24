@@ -29,7 +29,7 @@ module.exports = async () => new Promise((resolve,reject) => {
   }
 
   window.once('ready-to-show', async () => {
-    window.show()
+    //window.show()
     resolve(logger)
   })
 
